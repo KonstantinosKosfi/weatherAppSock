@@ -1,3 +1,5 @@
+import joblib
+
 from weather_ml import WeatherPredictor
 from datetime import datetime, timedelta
 import pandas as pd
@@ -65,6 +67,7 @@ def train_and_save_model():
     # Save the model
     predictor.save_model('weather_model.joblib')
     print("Model saved as 'weather_model.joblib'")
+    print(joblib.load('weather_model.joblib'))
 
 if __name__ == "__main__":
     train_and_save_model()

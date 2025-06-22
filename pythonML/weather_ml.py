@@ -1,12 +1,8 @@
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import random
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import RandomForestRegressor
 import joblib
-import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
 
 class WeatherPredictor:
     def __init__(self):
@@ -14,7 +10,7 @@ class WeatherPredictor:
         self.label_encoder = LabelEncoder()
         self.model = RandomForestRegressor(n_estimators=100, random_state=42)
         self.weather_conditions = [
-            "Sunny", "Partly Cloudy", "Cloudy", "Rain", 
+            "Sunny", "Partly Cloudy", "Cloudy", "Rain",
             "Thunderstorm", "Clear", "Overcast", "Light Rain"
         ]
         # Define feature names
@@ -22,10 +18,10 @@ class WeatherPredictor:
             'hour', 'day', 'month', 'day_of_week',
             'humidity', 'wind_speed', 'pressure', 'condition_encoded'
         ]
-        
+
         # Initialize label encoder with weather conditions
         self.label_encoder.fit(self.weather_conditions)
-        
+
         # Initialize scaler with sample data
         sample_data = pd.DataFrame({
             'hour': [12, 0, 6, 18],
@@ -38,7 +34,7 @@ class WeatherPredictor:
             'condition_encoded': self.label_encoder.transform(['Sunny', 'Cloudy', 'Rain', 'Clear'])
         })
         self.scaler.fit(sample_data)
-        
+
         # Initialize model with basic predictions
         self.model.fit(sample_data, [20, 15, 18, 22])  # Sample temperatures
 
@@ -48,7 +44,7 @@ class WeatherPredictor:
             features = features.reindex(columns=self.feature_names)
         else:
             features = pd.DataFrame(features, columns=self.feature_names)
-        
+
         features_scaled = self.scaler.transform(features)
         return self.model.predict(features_scaled)
 
