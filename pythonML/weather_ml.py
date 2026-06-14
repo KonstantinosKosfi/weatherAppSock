@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
+MODEL_FILE = "weather_model.joblib"
+
 
 class WeatherPredictor:
     def __init__(self):
@@ -48,7 +50,7 @@ class WeatherPredictor:
         features_scaled = self.scaler.transform(features)
         return self.model.predict(features_scaled)
 
-    def save_model(self, filename):
+    def save_model(self, filename=MODEL_FILE):
         joblib.dump({
             'model': self.model,
             'scaler': self.scaler,
@@ -57,7 +59,7 @@ class WeatherPredictor:
         }, filename)
 
     @staticmethod
-    def load_model(filename):
+    def load_model(filename=MODEL_FILE):
         predictor = WeatherPredictor()
         try:
             saved_model = joblib.load(filename)
@@ -65,6 +67,6 @@ class WeatherPredictor:
             predictor.scaler = saved_model['scaler']
             predictor.label_encoder = saved_model['label_encoder']
             predictor.feature_names = saved_model.get('feature_names', predictor.feature_names)
-        except:
-            print("No saved model found. Using default initialization.")
+        except FileNotFoundError:
+            print(f"No saved model found at {filename}. Using default initialization.")
         return predictor

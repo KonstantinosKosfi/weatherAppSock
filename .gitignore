@@ -1,0 +1,12 @@
+.idea/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+pythonML/weather_model.joblib
+
+webSocketServer/.gradle/
+webSocketServer/build/
+webSocketServer/src/main/client/node_modules/
+webSocketServer/src/main/client/dist/

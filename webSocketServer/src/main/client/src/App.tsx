@@ -1,12 +1,9 @@
 import React from 'react';
 import WeatherDashboard from './WeatherDashboard';
+import './App.css';
 
 const App: React.FC = () => {
-    return (
-        <div>
-            <WeatherDashboard />
-        </div>
-    );
+    return <WeatherDashboard />;
 };
 
 export default App;

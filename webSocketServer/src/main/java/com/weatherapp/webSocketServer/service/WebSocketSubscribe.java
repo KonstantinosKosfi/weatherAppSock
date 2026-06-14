@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.weatherapp.webSocketServer.exceptions.CustomErrorResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -19,22 +20,25 @@ import static com.weatherapp.webSocketServer.utils.Utils.convertPayloadToWeather
 @Slf4j
 public class WebSocketSubscribe implements WebSocketHandler {
 
-    private static final String WEBSOCKET_URL = "ws://localhost:8000/ws";
     private static final int RECONNECT_DELAY = 5; // seconds
 
     private final AtomicReference<WebSocketSession> session = new AtomicReference<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final WeatherKafkaProducer weatherKafkaProducer;
+    private final String weatherWebSocketUrl;
 
-    public WebSocketSubscribe(WeatherKafkaProducer weatherKafkaProducer) {
+    public WebSocketSubscribe(
+            WeatherKafkaProducer weatherKafkaProducer,
+            @Value("${weather.websocket.url:ws://localhost:8000/ws}") String weatherWebSocketUrl) {
         this.weatherKafkaProducer = weatherKafkaProducer;
+        this.weatherWebSocketUrl = weatherWebSocketUrl;
         connect();
     }
 
     private void connect() {
         StandardWebSocketClient client = new StandardWebSocketClient();
         CompletableFuture<WebSocketSession> futureSession =
-                client.execute(this, String.valueOf(URI.create(WEBSOCKET_URL)));
+                client.execute(this, String.valueOf(URI.create(weatherWebSocketUrl)));
 
         futureSession.whenComplete((webSocketSession, throwable) -> {
             if (throwable != null) {
@@ -56,23 +60,11 @@ public class WebSocketSubscribe implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
         try {
-            convertPayloadToWeather(
-                    String.valueOf(message.getPayload()));
-            weatherKafkaProducer.
-                    sendCurrentWeather(
-                            convertPayloadToWeather(
-                                    String.valueOf(
-                                            message.getPayload())));
-            weatherKafkaProducer.
-                    sendPredictions(
-                            convertPayloadToWeather(
-                                    String.valueOf(
-                                            message.getPayload())));
-            log.info("Received message at: {}",
-                    convertPayloadToWeather(
-                            String.valueOf(
-                                    message.
-                                            getPayload())).getTimestamp());
+            var weatherPayload = convertPayloadToWeather(String.valueOf(message.getPayload()));
+            weatherKafkaProducer.sendCurrentWeather(weatherPayload);
+            weatherKafkaProducer.sendPredictions(weatherPayload);
+            weatherKafkaProducer.sendMetadata(weatherPayload.getTimestamp(), weatherPayload.getGeneratedBy());
+            log.info("Received weather batch at: {}", weatherPayload.getTimestamp());
         } catch (JsonProcessingException e) {
             throw new CustomErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }

@@ -2,16 +2,11 @@ package com.weatherapp.webSocketServer.service;
 
 import com.weatherapp.webSocketServer.domain.topics.KafkaTopics;
 import com.weatherapp.webSocketServer.domain.topics.Metadata;
-import com.weatherapp.webSocketServer.domain.topics.PredictionDataTopic;
-import com.weatherapp.webSocketServer.domain.topics.WeatherDataTopic;
-import com.weatherapp.webSocketServer.domain.wsdata.Weather;
 import com.weatherapp.webSocketServer.payload.ws.WeatherPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 import static com.weatherapp.webSocketServer.domain.topics.KafkaTopics.*;
 

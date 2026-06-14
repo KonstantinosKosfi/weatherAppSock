@@ -2,6 +2,11 @@ spring:
   application:
     name: socket
   kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+weather:
+  websocket:
+    url: ${WEATHER_WEBSOCKET_URL:ws://localhost:8000/ws}

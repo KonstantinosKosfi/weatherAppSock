@@ -1,10 +1,14 @@
 import joblib
 
-from weather_ml import WeatherPredictor
+from pathlib import Path
+from weather_ml import MODEL_FILE, WeatherPredictor
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import random
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / MODEL_FILE
 
 def generate_training_data(days=30):
     data = []
@@ -65,9 +69,9 @@ def train_and_save_model():
     )
     
     # Save the model
-    predictor.save_model('weather_model.joblib')
-    print("Model saved as 'weather_model.joblib'")
-    print(joblib.load('weather_model.joblib'))
+    predictor.save_model(MODEL_PATH)
+    print(f"Model saved as '{MODEL_PATH}'")
+    print(joblib.load(MODEL_PATH))
 
 if __name__ == "__main__":
     train_and_save_model()

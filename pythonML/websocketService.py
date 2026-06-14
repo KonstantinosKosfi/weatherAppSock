@@ -17,15 +17,20 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
         self.running = False
+        self.latest_message: str | None = None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.add(websocket)
+        if self.latest_message:
+            await websocket.send_text(self.latest_message)
         logger.info(f"Client connected. Total connections: {len(self.active_connections)}")
 
     async def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        self.active_connections.discard(websocket)
         logger.info(f"Client disconnected. Total connections: {len(self.active_connections)}")
+        if not self.active_connections:
+            self.stop_weather_updates()
 
     async def broadcast(self, message: str):
         disconnected = set()
@@ -52,14 +57,14 @@ class ConnectionManager:
                     "predictions": []
                 }
 
-                for city in weather_station.cities:
-                    current = weather_station.generate_weather_data(city)
+                for current in weather_station.generate_current_weather_batch():
                     prediction = weather_station.predict_next_weather(current)
 
                     weather_data["current_weather"].append(current)
                     weather_data["predictions"].append(prediction)
 
-                await self.broadcast(json.dumps(weather_data))
+                self.latest_message = json.dumps(weather_data)
+                await self.broadcast(self.latest_message)
                 await asyncio.sleep(5)
 
             except Exception as e:
@@ -87,8 +92,6 @@ async def websocket_endpoint(websocket: WebSocket):
         await manager.disconnect(websocket)
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
-        await manager.disconnect(websocket)
-    finally:
         await manager.disconnect(websocket)
 
 @app.get("/health")

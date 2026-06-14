@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   kafka:
     image: bitnami/kafka:latest
@@ -10,13 +8,45 @@ services:
       KAFKA_CFG_NODE_ID: 0
       KAFKA_CFG_PROCESS_ROLES: broker,controller
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       ALLOW_PLAINTEXT_LISTENER: yes
     volumes:
       - kafka_data:/bitnami/kafka
+
+  weather-python:
+    build:
+      context: ./pythonML
+    container_name: weather_python
+    ports:
+      - "8000:8000"
+
+  weather-spring:
+    build:
+      context: ./webSocketServer
+    container_name: weather_spring
+    depends_on:
+      - kafka
+      - weather-python
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      WEATHER_WEBSOCKET_URL: ws://weather-python:8000/ws
+
+  weather-ui:
+    build:
+      context: ./webSocketServer/src/main/client
+      args:
+        VITE_WEATHER_SOCKET_URL: ws://localhost:8000/ws
+    container_name: weather_ui
+    depends_on:
+      - weather-python
+    ports:
+      - "5173:80"
 
 volumes:
   kafka_data:
